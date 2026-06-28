@@ -1,4 +1,6 @@
-supabase==2.3.0
-trimesh[easy]==4.0.5
-postgrest==0.16.0
-realtime==1.0.0
+supabase==2.9.0
+trimesh[easy]>=4.5.0
+postgrest>=0.17.0
+realtime>=2.0.0
+pydantic>=2.10.0
+python-dotenv>=1.0.1
