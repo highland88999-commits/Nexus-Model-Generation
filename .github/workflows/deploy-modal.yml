@@ -3,7 +3,7 @@ name: Deploy Modal Backend
 on:
   push:
     branches:
-      - main # Runs automatically when you save to the main branch
+      - main
     paths:
       - 'olympus-3d-generator/backend/**' 
       - 'olympus-3d-generator/package.json'
@@ -12,16 +12,16 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
-    # This forces GitHub to execute all terminal commands inside your subfolder
     defaults:
       run:
         working-directory: olympus-3d-generator
 
-    # Injects your Modal tokens into the GitHub server
     env:
       MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
       MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+      # Required so the Modal CLI picks up the auth automatically
+      MODAL_TOKEN_ID_ENV: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET_ENV: ${{ secrets.MODAL_TOKEN_SECRET }}
 
     steps:
       - name: Checkout Code
@@ -37,13 +37,19 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install Node Dependencies
-        run: npm install
+      - name: Install Dependencies
+        run: |
+          npm install
+          npm run backend:init
+
+      - name: Authenticate Modal CLI
+        # This explicitly tells Modal to use the secrets provided
+        run: |
+          modal token set --token-id $MODAL_TOKEN_ID_ENV --token-secret $MODAL_TOKEN_SECRET_ENV
 
       - name: Build Secure .env File
-        # Generates the .env file exactly where the bootstrap script expects it
         run: |
           echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" > .env
 
-      - name: Bootstrap Modal Pipeline (Init, Secrets, & Deploy)
+      - name: Bootstrap Modal Pipeline
         run: npm run backend:bootstrap
