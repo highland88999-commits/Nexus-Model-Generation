@@ -1,0 +1,18 @@
+{
+  "name": "olympus-3d-generator",
+  "version": "1.0.0",
+  "description": "Self-hosted 3D model generation pipeline for Olympus via Modal",
+  "main": "backend/generator_app.py",
+  "scripts": {
+    "backend:init": "pip install modal supabase trimesh[easy] pydantic python-dotenv",
+    "backend:setup": "python3 -m modal setup",
+    "backend:secrets": "modal secret create supabase-olympus-env --from-dotenv .env --force",
+    "backend:dev": "modal run backend/generator_app.py",
+    "backend:deploy": "modal deploy backend/generator_app.py",
+    "backend:bootstrap": "npm run backend:init && npm run backend:secrets && npm run backend:deploy"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
