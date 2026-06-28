@@ -32,15 +32,16 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install Python Dependencies
-        run: npm run backend:init
+      - name: Install Node Dependencies
+        run: npm install
 
       - name: Build Secure .env File
+        # We must build the .env file BEFORE running bootstrap, 
+        # so the backend:secrets script inside bootstrap has the keys to push.
         run: |
           echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" > .env
 
-      - name: Sync Secrets to Modal Cloud
-        run: npm run backend:secrets
-
-      - name: Deploy AI Engine to Modal
-        run: npm run backend:deploy
+      - name: Bootstrap Modal Pipeline (Init, Secrets, & Deploy)
+        # This single command runs backend:init, backend:secrets, and backend:deploy.
+        # During the deploy step, Modal's servers will catch it and install Trellis.
+        run: npm run backend:bootstrap
