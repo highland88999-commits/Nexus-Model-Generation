@@ -1,0 +1,4 @@
+supabase==2.3.0
+trimesh[easy]==4.0.5
+postgrest==0.16.0
+realtime==1.0.0
