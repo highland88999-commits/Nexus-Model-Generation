@@ -19,9 +19,10 @@ jobs:
     env:
       MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
       MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
-      # For Modal CLI compatibility
       MODAL_TOKEN_ID_ENV: ${{ secrets.MODAL_TOKEN_ID }}
       MODAL_TOKEN_SECRET_ENV: ${{ secrets.MODAL_TOKEN_SECRET }}
+      # Suppress Node deprecation warning
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
     steps:
       - name: Checkout Code
@@ -30,18 +31,18 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'  # Optional: speeds up repeated runs
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install Dependencies
         run: |
-          npm ci  # Use ci for cleaner, locked installs in CI
-          npm run backend:init  # This should handle pip installs, including python-dotenv etc.
+          npm ci || npm install   # Prefer ci, fallback to install if no lockfile
+          npm run backend:init
 
       - name: Authenticate Modal CLI
         run: |
@@ -51,7 +52,6 @@ jobs:
         run: |
           cat > .env << EOF
           SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          # Add any other backend secrets here
           EOF
 
       - name: Bootstrap Modal Pipeline
