@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-export default function ModelGenerator({ userId }) {
+// 1. Add onGenerationComplete to the accepted props
+export default function ModelGenerator({ userId, onGenerationComplete }) {
   const [prompt, setPrompt] = useState('')
   const [status, setStatus] = useState('idle') // idle, pending, processing, complete, failed
   const [modelUrl, setModelUrl] = useState(null)
@@ -26,7 +27,13 @@ export default function ModelGenerator({ userId }) {
           setStatus(newStatus)
           
           if (newStatus === 'complete') {
-            setModelUrl(payload.new.output_url)
+            const finalUrl = payload.new.output_url
+            setModelUrl(finalUrl)
+            
+            // 2. Invoke the callback so the parent Page knows the URL is ready
+            if (onGenerationComplete) {
+              onGenerationComplete(finalUrl)
+            }
           }
         }
       )
@@ -35,33 +42,34 @@ export default function ModelGenerator({ userId }) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [jobId])
+  }, [jobId, onGenerationComplete])
 
   const handleGenerate = async () => {
     if (!prompt) return
 
     setStatus('pending')
     
-    // Insert the job into Supabase
-    const { data, error } = await supabase
-      .from('generation_jobs')
-      .insert([
-        { 
-          user_id: userId, 
-          prompt: prompt 
-        }
-      ])
-      .select()
-      .single()
+    // 3. Hit the secure Next.js API route instead of inserting directly into Supabase
+    // This ensures your database credits are checked AND the Modal GPU is triggered.
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, userId })
+      })
 
-    if (error) {
+      if (!res.ok) {
+        throw new Error('Failed to start generation')
+      }
+
+      const data = await res.json()
+      
+      // Set the jobId to trigger the Realtime listener above
+      setJobId(data.jobId)
+    } catch (error) {
       console.error("Error creating job:", error)
       setStatus('failed')
-      return
     }
-
-    // Set the jobId to trigger the Realtime listener
-    setJobId(data.id)
   }
 
   return (
