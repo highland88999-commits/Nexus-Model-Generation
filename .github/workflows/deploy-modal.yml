@@ -1,0 +1,46 @@
+name: Deploy Modal Backend
+
+on:
+  push:
+    branches:
+      - main # Runs automatically when you save to the main branch
+    paths:
+      - 'backend/**' # Only runs if you actually changed the Python code
+      - 'package.json'
+      - '.github/workflows/deploy-modal.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    # Injects your Modal tokens into the GitHub server
+    env:
+      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Python Dependencies
+        run: npm run backend:init
+
+      - name: Build Secure .env File
+        run: |
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" > .env
+
+      - name: Sync Secrets to Modal Cloud
+        run: npm run backend:secrets
+
+      - name: Deploy AI Engine to Modal
+        run: npm run backend:deploy
