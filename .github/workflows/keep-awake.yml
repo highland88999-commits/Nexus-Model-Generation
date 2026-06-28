@@ -1,0 +1,95 @@
+name: Keep Olympus Awake
+
+on:
+  schedule:
+    # Runs every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allows you to trigger this manually from the GitHub Actions tab
+
+jobs:
+  ping_empire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping All Vercel Deployments
+        run: |
+          urls=(
+            "https://nexus-model-generation.vercel.app"
+            "https://georgia-aquarium.vercel.app"
+            "https://architect-artemis.vercel.app"
+            "https://olympus-lac.vercel.app"
+            "https://starblood.vercel.app"
+            "https://biological-warfare.vercel.app"
+            "https://persymphony.vercel.app"
+            "https://ares-gamma.vercel.app"
+            "https://olympus-social.vercel.app"
+            "https://fortress-of-solitude.vercel.app"
+            "https://valkyries-of-olympus.vercel.app"
+            "https://aetheris-business-model.vercel.app"
+            "https://convergence-murex.vercel.app"
+            "https://medusas-lair.vercel.app"
+            "https://colossus-xi.vercel.app"
+            "https://underworld-gaming.vercel.app"
+            "https://venus-wi-fi.vercel.app"
+            "https://neon-racer-ecru.vercel.app"
+            "https://vortex-generator-delta.vercel.app"
+            "https://artemis-os.vercel.app"
+            "https://hermes-landing-nu.vercel.app"
+            "https://olympian-chess.vercel.app"
+            "https://rem-psi-mauve.vercel.app"
+            "https://the-flying-dutchman.vercel.app"
+            "https://light-particle-engine.vercel.app"
+            "https://raptor-rush.vercel.app"
+            "https://set-air-hockey.vercel.app"
+            "https://multiverse-tracker-api.vercel.app"
+            "https://artemis-hub.vercel.app"
+            "https://tornado-two.vercel.app"
+            "https://project-khaos.vercel.app"
+            "https://abyssal-voyage-lemon.vercel.app"
+            "https://the-big-bang-teal.vercel.app"
+            "https://bc-1-nine.vercel.app"
+            "https://the-afterlife.vercel.app"
+            "https://nv-2-video-library.vercel.app"
+            "https://olympus-eclipse.vercel.app"
+            "https://zeus-v-hades.vercel.app"
+            "https://olympus-blueprint-protocol.vercel.app"
+            "https://hercules-nine.vercel.app"
+            "https://ferry-token.vercel.app"
+            "https://hyperion-gravitas.vercel.app"
+            "https://olympus-map-node.vercel.app"
+            "https://mega-city-liard.vercel.app"
+            "https://olympus-x-gym-equipment.vercel.app"
+            "https://olympus-b2-b.vercel.app"
+            "https://magic-mirror-puce.vercel.app"
+            "https://merlin-mandates.vercel.app"
+            "https://the-hive-vert.vercel.app"
+            "https://aethelgard-five.vercel.app"
+            "https://aura-genesis.vercel.app"
+            "https://olympus-aetheris.vercel.app"
+            "https://air-filter-model.vercel.app"
+            "https://architectural-legacy.vercel.app"
+            "https://zeus-protocol-deep-space-defence.vercel.app"
+            "https://vortex-generation-portal.vercel.app"
+            "https://nexus-vortex.vercel.app"
+            "https://axiom-repository.vercel.app"
+            "https://liquid-gold.vercel.app"
+            "https://the-glass-slipper.vercel.app"
+            "https://alexandria-gules-seven.vercel.app"
+            "https://nexus-codex-eta.vercel.app"
+            "https://loki-kappa-seven.vercel.app"
+            "https://underworld-awakening.vercel.app"
+            "https://beekeeper-chi.vercel.app"
+            "https://olympian-finances.vercel.app"
+            "https://aetheris-weld-eight.vercel.app"
+            "https://pan-s-labrynth.vercel.app"
+            "https://prometheus-iota-livid.vercel.app"
+            "https://grief-gully.vercel.app"
+            "https://mount-olympus-eight.vercel.app"
+            "https://olympian-education-rrcu.vercel.app"
+          )
+
+          for url in "${urls[@]}"; do
+            echo "Pinging $url..."
+            curl -s "$url" > /dev/null
+            # 1-second delay to avoid Vercel edge rate-limiting
+            sleep 1 
+          done
