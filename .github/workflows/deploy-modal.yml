@@ -34,29 +34,22 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: olympus-3d-generator/package-lock.json   # ← This is the fix
 
       - name: Install Dependencies
         working-directory: ./olympus-3d-generator
         run: |
-          echo "Current directory: $(pwd)"
-          ls -la
-          
-          # Force generate lockfile if missing
           if [ ! -f package-lock.json ]; then
-            echo "package-lock.json not found. Generating..."
-            npm install --package-lock-only
-            echo "Lockfile generated."
+            echo "Generating package-lock.json..."
+            npm install
           else
-            echo "Using existing package-lock.json"
             npm ci
           fi
-          
           npm run backend:init
 
       - name: Authenticate Modal CLI
         working-directory: ./olympus-3d-generator
-        run: |
-          modal token set --token-id "$MODAL_TOKEN_ID_ENV" --token-secret "$MODAL_TOKEN_SECRET_ENV"
+        run: modal token set --token-id "$MODAL_TOKEN_ID_ENV" --token-secret "$MODAL_TOKEN_SECRET_ENV"
 
       - name: Build Secure .env File
         working-directory: ./olympus-3d-generator
