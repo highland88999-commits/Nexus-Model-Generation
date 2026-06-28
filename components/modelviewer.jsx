@@ -1,54 +1,36 @@
+'use client'
 import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, useGLTF, Center, Stage } from '@react-three/drei'
 
 // 1. The component that physically handles loading the mesh
 function GeneratedMesh({ url }) {
-  // useGLTF automatically manages caching and uses a CDN-hosted Draco decoder by default.
-  // It handles the decompression on a worker thread so the main UI loop doesn't stutter.
+  // useGLTF handles caching and Draco decompression automatically.
   const { scene } = useGLTF(url)
-
-  return (
-    <primitive 
-      object={scene} 
-      dispose={null} 
-      castShadow 
-      receiveShadow
-    />
-  )
+  return <primitive object={scene} dispose={null} castShadow receiveShadow scale={1.5} />
 }
 
-// 2. A fallback component to show while the file is downloading/parsing
+// 2. A fallback component for the holographic aesthetic while the file downloads
 function LoaderFallback() {
   return (
     <mesh>
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color="#4b5563" wireframe />
+      <meshStandardMaterial color="#00f3ff" wireframe emissive="#00f3ff" emissiveIntensity={0.5} />
     </mesh>
   )
 }
 
-// 3. The primary exported layout containing the R3F Canvas
+// 3. The primary exported component
 export default function ModelViewer({ modelUrl }) {
-  if (!modelUrl) {
-    return (
-      <div className="w-full h-96 flex items-center justify-center bg-gray-950 rounded-lg border border-gray-800 text-gray-500">
-        Waiting for asset generation to complete...
-      </div>
-    )
-  }
+  if (!modelUrl) return null
 
   return (
-    <div className="w-full h-96 bg-gray-950 rounded-lg border border-gray-800 relative overflow-hidden">
-      <Canvas 
-        shadows 
-        camera={{ position: [0, 0, 4], fov: 50 }}
-        gl={{ preserveDrawingBuffer: true }}
-      >
-        <color attach="background" args={['#030712']} />
+    <div className="w-full h-96 mt-8 border border-cyan-500/50 shadow-[0_0_15px_rgba(0,243,255,0.3)] bg-black/40 backdrop-blur-md rounded-xl overflow-hidden relative z-10">
+      <Canvas shadows camera={{ position: [0, 0, 4], fov: 50 }}>
+        <color attach="background" args={['#000000']} />
         
-        {/* Stage handles automatic professional framing, lighting setups, and contact shadows */}
-        <Stage intensity={0.5} environment="city" adjustCamera={true}>
+        {/* Holographic Stage setup */}
+        <Stage environment="city" intensity={0.5} adjustCamera={true}>
           <Center>
             <Suspense fallback={<LoaderFallback />}>
               <GeneratedMesh url={modelUrl} />
@@ -56,21 +38,22 @@ export default function ModelViewer({ modelUrl }) {
           </Center>
         </Stage>
 
+        {/* Holographic rim lighting */}
+        <ambientLight intensity={0.2} />
+        <directionalLight position={[5, 5, 5]} intensity={1} color="#ff00ea" />
+        <directionalLight position={[-5, 5, -5]} intensity={1} color="#ffd700" />
+        
         <OrbitControls 
-          enablePan={true} 
+          autoRotate 
+          autoRotateSpeed={2} 
           enableZoom={true} 
-          minDistance={1} 
-          maxDistance={10} 
-          makeDefault
+          enablePan={true}
+          makeDefault 
         />
       </Canvas>
-      
-      <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md text-xs text-gray-400 px-2 py-1 rounded">
-        Orbit: Left Click | Pan: Right Click / Shift | Zoom: Scroll
-      </div>
     </div>
   )
 }
 
-// Pre-load logic to avoid popping lags when the URL updates
+// Pre-load logic
 useGLTF.preload = (url) => useGLTF.preload(url)
