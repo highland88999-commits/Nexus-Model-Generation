@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Initialize Supabase with the Service Role Key for Admin rights
+// 1. Initialize Supabase with the Admin Key so the server can insert jobs and deduct credits
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY 
 const supabase = createClient(supabaseUrl, supabaseKey)
@@ -22,7 +22,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
-    // 1. Insert the job into Supabase. 
+    // 2. Insert the job into Supabase. 
     // Because we set up SQL triggers, this automatically checks and deducts a user credit.
     const { data: jobData, error: dbError } = await supabase
       .from('generation_jobs')
@@ -35,7 +35,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Failed to create job or out of credits' }, { status: 403 })
     }
 
-    // 2. Fire and Forget to the Modal GPU Webhook
+    // 3. Fire and Forget to the Modal GPU Webhook
     // We do NOT await this fetch because 3D generation takes several seconds.
     // Modal runs asynchronously and updates Supabase directly when it finishes.
     fetch(MODAL_WEBHOOK_URL, {
@@ -48,7 +48,7 @@ export async function POST(request) {
       })
     }).catch(err => console.error("Modal trigger failed:", err))
 
-    // 3. Return the jobId to the frontend instantly so it can start the Realtime listener
+    // 4. Return the jobId to the frontend instantly so it can start the Realtime listener
     return NextResponse.json({ jobId: jobData.id })
 
   } catch (error) {
