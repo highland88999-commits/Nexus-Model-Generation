@@ -5,14 +5,19 @@ on:
     branches:
       - main # Runs automatically when you save to the main branch
     paths:
-      - 'backend/**' # Only runs if you actually changed the Python code
-      - 'package.json'
+      - 'olympus-3d-generator/backend/**' 
+      - 'olympus-3d-generator/package.json'
       - '.github/workflows/deploy-modal.yml'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     
+    # This forces GitHub to execute all terminal commands inside your subfolder
+    defaults:
+      run:
+        working-directory: olympus-3d-generator
+
     # Injects your Modal tokens into the GitHub server
     env:
       MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
@@ -36,12 +41,9 @@ jobs:
         run: npm install
 
       - name: Build Secure .env File
-        # We must build the .env file BEFORE running bootstrap, 
-        # so the backend:secrets script inside bootstrap has the keys to push.
+        # Generates the .env file exactly where the bootstrap script expects it
         run: |
           echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" > .env
 
       - name: Bootstrap Modal Pipeline (Init, Secrets, & Deploy)
-        # This single command runs backend:init, backend:secrets, and backend:deploy.
-        # During the deploy step, Modal's servers will catch it and install Trellis.
         run: npm run backend:bootstrap
