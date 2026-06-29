@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXUS • Olympus 3D Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+    .neon-cyan { text-shadow: 0 0 20px #22f0ff; }
+    .vortex-bg { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at center, #0a0022 0%, #000 70%); }
+  </style>
+</head>
+<body class="bg-black text-white min-h-screen overflow-auto">
+  <div class="vortex-bg"></div>
+
+  <div class="max-w-4xl mx-auto px-6 py-12 relative z-10">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-12">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-purple-600 rounded-2xl"></div>
+        <div>
+          <div class="text-3xl font-light tracking-widest">NEXUS</div>
+          <div class="text-xs text-cyan-400 -mt-1">OLYMPUS 3D ENGINE</div>
+        </div>
+      </div>
+      <div class="text-xs font-mono text-white/50">v1.1 • POWERED BY MODAL</div>
+    </div>
+
+    <!-- Hero -->
+    <div class="text-center mb-16">
+      <h1 class="text-6xl md:text-7xl font-light tracking-tighter neon-cyan">TEXT TO 3D</h1>
+      <p class="text-xl text-white/70 mt-4">Instant photorealistic models. Holographic interface.</p>
+    </div>
+
+    <!-- Generation Card -->
+    <div class="glass rounded-3xl p-10 max-w-2xl mx-auto">
+      <textarea id="prompt" rows="4"
+        class="w-full bg-black/50 border border-white/20 rounded-2xl p-6 text-lg placeholder:text-white/40 focus:outline-none focus:border-cyan-400"
+        placeholder="A majestic cyber-dragon perched on a neon Tokyo skyscraper at midnight..."></textarea>
+      
+      <button onclick="generateModel()" id="generateBtn"
+        class="mt-6 w-full bg-white text-black font-medium py-5 rounded-2xl text-lg flex items-center justify-center gap-3 hover:bg-cyan-300 transition">
+        <i class="fas fa-rocket"></i> LAUNCH GENERATION
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div id="status" class="hidden mt-8 glass rounded-3xl p-8 text-center">
+      <div id="statusText" class="text-2xl font-light"></div>
+      <div id="result" class="mt-6"></div>
+    </div>
+  </div>
+
+  <script>
+    async function generateModel() {
+      const prompt = document.getElementById('prompt').value.trim();
+      const btn = document.getElementById('generateBtn');
+      const status = document.getElementById('status');
+      const statusText = document.getElementById('statusText');
+
+      if (!prompt) return alert("Enter a prompt");
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> GENERATING...`;
+      status.classList.remove('hidden');
+      statusText.textContent = "QUEUED IN THE VORTEX...";
+
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ prompt, userId: 'demo-user' })
+        });
+
+        const data = await res.json();
+        if (data.jobId) {
+          statusText.innerHTML = `JOB #${data.jobId}<br><span class="text-cyan-400 text-sm">Waiting for Modal...</span>`;
+          // TODO: Poll or use realtime for final URL
+        }
+      } catch(e) {
+        statusText.textContent = "ERROR — CHECK CONSOLE";
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fas fa-rocket"></i> LAUNCH GENERATION`;
+      }
+    }
+  </script>
+</body>
+</html>
