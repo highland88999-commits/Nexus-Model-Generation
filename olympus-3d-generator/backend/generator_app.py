@@ -1,38 +1,26 @@
 import os
-import time
 from datetime import datetime
 import modal
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-# Load .env for local development
 load_dotenv()
 
-# 1. Define the expected incoming JSON payload from Next.js
 class GenerationRequest(BaseModel):
     job_id: str
     prompt: str
     user_id: str
 
-# 2. Build the heavy container environment with upgraded libraries
+# Container Image
 image = (
-    modal.Image.debian_slim(python_version="3.11")  # Upgraded to 3.11 for better performance
+    modal.Image.debian_slim(python_version="3.11")
     .apt_install("git", "libgl1-mesa-glx", "libglib2.0-0", "libsm6", "libxext6", "libxrender-dev")
     .pip_install(
-        "torch==2.5.1", 
-        "torchvision==0.20.1",
-        "transformers>=4.46.0",
-        "diffusers>=0.32.0",
-        "accelerate>=1.1.0",
-        "supabase>=2.9.0",
-        "trimesh[easy]>=4.5.0",
-        "postgrest>=0.17.0",
-        "imageio>=2.36.0",
-        "rembg>=2.0.60",
-        "pydantic>=2.10.0",
-        "python-dotenv>=1.0.1"
+        "torch==2.5.1", "torchvision==0.20.1", "transformers>=4.46.0",
+        "diffusers>=0.32.0", "accelerate>=1.1.0", "supabase>=2.9.0",
+        "trimesh[easy]>=4.5.0", "postgrest>=0.17.0", "imageio>=2.36.0",
+        "rembg>=2.0.60", "pydantic>=2.10.0", "python-dotenv>=1.0.1"
     )
-    # Specialized 3D / attention libraries
     .run_commands("pip install flash-attn --no-build-isolation")
     .run_commands("pip install spconv-cu121")
     .run_commands("pip install git+https://github.com/microsoft/TRELLIS.git")
@@ -40,28 +28,6 @@ image = (
 
 app = modal.App("olympus-3d-engine")
 
-# 3. Cache model weights during deployment
-@app.build()
-def download_ai_weights():
-    import torch
-    from diffusers import AutoPipelineForText2Image
-    from trellis.pipelines import TrellisImageTo3DPipeline
-    import rembg
-    
-    print("Caching SDXL-Turbo (Text-to-Image)...")
-    AutoPipelineForText2Image.from_pretrained(
-        "stabilityai/sdxl-turbo", 
-        torch_dtype=torch.float16, 
-        variant="fp16"
-    )
-    
-    print("Caching background removal model...")
-    rembg.new_session("u2net")
-    
-    print("Caching TRELLIS (Image-to-3D)...")
-    TrellisImageTo3DPipeline.from_pretrained("JeffreyXiang/TRELLIS-image-large")
-
-# 4. The actual AI pipeline
 def run_ai_mesh_generation(prompt: str, local_path: str):
     import torch
     from diffusers import AutoPipelineForText2Image
@@ -78,7 +44,6 @@ def run_ai_mesh_generation(prompt: str, local_path: str):
     
     concept_image = t2i_pipe(prompt, num_inference_steps=4, guidance_scale=0.0).images[0]
     
-    # Clear VRAM
     del t2i_pipe
     torch.cuda.empty_cache()
 
@@ -101,7 +66,6 @@ def run_ai_mesh_generation(prompt: str, local_path: str):
     
     glb_mesh.export(local_path)
 
-# 5. Secure FastAPI Endpoint
 @app.function(
     image=image,
     gpu="A10G",
